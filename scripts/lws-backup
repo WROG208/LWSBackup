@@ -1,0 +1,65 @@
+#!/bin/bash
+# LWS Backup v17 — modular entrypoint
+# WROG208 / N4ASS
+# Designed for HamVoIP / Arch Linux ARM / Debian / Raspberry Pi / AllStar-style nodes.
+# Bash 4.x compatible. No Python required.
+
+if [ -z "${LWS_SCRIPT_ROOT:-}" ]; then
+    _lws_entry="${BASH_SOURCE[0]}"
+    if command -v readlink >/dev/null 2>&1; then
+        _lws_entry="$(readlink -f "$_lws_entry" 2>/dev/null || echo "$_lws_entry")"
+    fi
+    LWS_SCRIPT_ROOT="$(cd "$(dirname "$_lws_entry")" && pwd)"
+fi
+unset _lws_entry
+
+lws_source_files() {
+    # shellcheck disable=SC1090
+    for f in "$@"; do
+        [ -f "$f" ] || continue
+        . "$f"
+    done
+}
+
+# shellcheck disable=SC1091
+. "$LWS_SCRIPT_ROOT/lib/00-bootstrap.sh"
+
+lws_source_files \
+    "$LWS_SCRIPT_ROOT/lib/01-version.sh" \
+    "$LWS_SCRIPT_ROOT/lib/02-paths.sh" \
+    "$LWS_SCRIPT_ROOT/lib/03-log.sh" \
+    "$LWS_SCRIPT_ROOT/lib/04-util.sh" \
+    "$LWS_SCRIPT_ROOT/lib/05-lock.sh" \
+    "$LWS_SCRIPT_ROOT/lib/06-config.sh" \
+    "$LWS_SCRIPT_ROOT/lib/07-deps.sh" \
+    "$LWS_SCRIPT_ROOT/lib/08-targets.sh" \
+    "$LWS_SCRIPT_ROOT/lib/09-names.sh" \
+    "$LWS_SCRIPT_ROOT/lib/10-backup.sh" \
+    "$LWS_SCRIPT_ROOT/lib/11-restore-kit.sh" \
+    "$LWS_SCRIPT_ROOT/lib/12-verify.sh" \
+    "$LWS_SCRIPT_ROOT/lib/13-ftp.sh" \
+    "$LWS_SCRIPT_ROOT/lib/14-retention.sh" \
+    "$LWS_SCRIPT_ROOT/lib/15-cron.sh" \
+    "$LWS_SCRIPT_ROOT/lib/16-profiles.sh" \
+    "$LWS_SCRIPT_ROOT/lib/17-install.sh" \
+    "$LWS_SCRIPT_ROOT/lib/18-job.sh"
+
+lws_source_files \
+    "$LWS_SCRIPT_ROOT/ui/dialog.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-general.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-targets.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-ftp.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-cron.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-logs.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-profiles.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu-restore.sh" \
+    "$LWS_SCRIPT_ROOT/ui/menu.sh"
+
+lws_source_files \
+    "$LWS_SCRIPT_ROOT/commands/install.sh" \
+    "$LWS_SCRIPT_ROOT/commands/setup.sh" \
+    "$LWS_SCRIPT_ROOT/commands/menu.sh" \
+    "$LWS_SCRIPT_ROOT/commands/main.sh"
+
+trap cleanup EXIT INT TERM
+main "$@"
